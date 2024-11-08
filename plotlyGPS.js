@@ -1,4 +1,4 @@
-const speedOfLight = 3 * 10**8; 
+const speedOfLight = 3 * 10**7; 
 
 const trace1 = {
     x: [], // координати X для супутників
@@ -58,19 +58,23 @@ function updateChart() {
     const receivedAtTimes = [];
 
     for (const id in satellites) {
-        satelliteX.push(...satellites[id].x);
-        satelliteY.push(...satellites[id].y);
-        sentAtTimes.push(...satellites[id].sentAt);
-        receivedAtTimes.push(...satellites[id].receivedAt);
+        satelliteX.push(...satellites[id].x.map(x => x * 1000)); 
+        satelliteY.push(...satellites[id].y.map(y => y * 1000));
+        sentAtTimes.push(...satellites[id].sentAt.map(time => time / 1000)); 
+        receivedAtTimes.push(...satellites[id].receivedAt.map(time => time / 1000)); 
     }
 
     if (satelliteX.length >= 3 && satelliteY.length >= 3) {
         const distances = sentAtTimes.map((sentAt, index) => {
             const receivedAt = receivedAtTimes[index];
-            return speedOfLight * ((receivedAt - sentAt) / 1000); 
+            const timeDifference = receivedAt - sentAt;
+            if (timeDifference < 0) {
+                console.error('Негативна різниця часу між відправленням та отриманням.');
+                return 0;
+            }
+            return speedOfLight * timeDifference; 
         });
 
-        // Perform calculations as described in the image
         const A = 2 * (satelliteX[1] - satelliteX[0]);
         const B = 2 * (satelliteY[1] - satelliteY[0]);
         const C = Math.pow(distances[0], 2) - Math.pow(distances[1], 2) - Math.pow(satelliteX[0], 2) + Math.pow(satelliteX[1], 2) - Math.pow(satelliteY[0], 2) + Math.pow(satelliteY[1], 2);
@@ -92,9 +96,10 @@ function updateChart() {
         trace2.x = [Xc];
         trace2.y = [Yc];
 
-        console.log(satellites);
-        console.log(`${trace1.x} and ${trace1.y}`);
-        console.log(`${trace2.x} and ${trace2.y}`);
+        // for debugging
+        // console.log(satellites);
+        // console.log(`${trace1.x} and ${trace1.y}`);
+        // console.log(`${trace2.x} and ${trace2.y}`);
     }
 
     Plotly.restyle('plot', 'x', [trace1.x, trace2.x]);
